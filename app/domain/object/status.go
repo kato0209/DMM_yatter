@@ -4,7 +4,6 @@ import (
 	"time"
 )
 
-
 type MediaAttachment struct {
 	ID int64 `json:"id,omitempty"`
 
@@ -13,6 +12,8 @@ type MediaAttachment struct {
 	Url string `json:"url,omitempty"`
 
 	Description string `json:"description,omitempty"`
+
+	StatusId int64 `json:"-" db:"status_id"`
 }
 
 type Status struct {

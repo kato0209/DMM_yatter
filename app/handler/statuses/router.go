@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"yatter-backend-go/app/domain/repository"
 	"yatter-backend-go/app/handler/auth"
-	"fmt"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -20,8 +19,7 @@ func NewRouter(sr repository.Status, ar repository.Account) http.Handler {
 	r := chi.NewRouter()
 
 	h := &handler{sr,ar}
-	fmt.Println(99)
 	r.With(auth.Middleware(ar)).Post("/", h.Post)
-	fmt.Println(100)
+	r.Get("/{id}", h.FindStatus)
 	return r
 }
