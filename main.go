@@ -26,6 +26,6 @@ func serve(ctx context.Context) error {
 	log.Printf("Serve on http://%s", addr)
 
 	return http.ListenAndServe(addr, handler.NewRouter(
-		dao.NewAccount(db),
+		dao.NewAccount(db), dao.NewStatus(db),
 	))
 }
