@@ -23,14 +23,17 @@ func (h *handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	account := new(object.Account)
+	account := object.Account{}
 	account.Username = req.Username
 	if err := account.SetPassword(req.Password); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	panic("Must Implement Account Registration")
+	if err := h.ar.CreateAccount(account); err != nil {
+        http.Error(w, err.Error(), http.StatusInternalServerError)
+        return
+    }
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(account); err != nil {

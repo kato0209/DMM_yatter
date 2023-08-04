@@ -1,4 +1,4 @@
-package accounts
+package timelines
 
 import (
 	"net/http"
@@ -9,15 +9,15 @@ import (
 
 // Implementation of handler
 type handler struct {
+	sr repository.Status
 	ar repository.Account
 }
 
 // Create Handler for `/v1/accounts/`
-func NewRouter(ar repository.Account) http.Handler {
+func NewRouter(sr repository.Status, ar repository.Account) http.Handler {
 	r := chi.NewRouter()
 
-	h := &handler{ar}
-	r.Post("/", h.Create)
-	r.Get("/{username}", h.GetAccountHandler)
+	h := &handler{sr,ar}
+	r.Get("/public", h.PublicTimelines)
 	return r
 }
