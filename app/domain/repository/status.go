@@ -11,4 +11,6 @@ type Status interface {
 	FindById(ctx context.Context, id int64) (*object.Status, int64, error)
 
 	FindMediaById(ctx context.Context, id int64) (*object.MediaAttachment,  error)
+
+	GetTimelines(ctx context.Context) ([]object.Status, error)
 }

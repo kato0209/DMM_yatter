@@ -4,6 +4,7 @@ import (
 	//"database/sql"
 	"yatter-backend-go/app/domain/object"
 	"yatter-backend-go/app/domain/repository"
+	"yatter-backend-go/app/handler/timelines"
 	"fmt"
 	"context"
 	"errors"
@@ -103,7 +104,6 @@ func (r *status) FindById(ctx context.Context, id int64) (*object.Status, int64,
 
 	media, err := r.FindMediaById(ctx, entity.ID)
 	if err != nil {
-		fmt.Println(89)
 		return nil, 0, err
 	}
 
@@ -129,8 +129,104 @@ func (r *status) FindMediaById(ctx context.Context, id int64) (*object.MediaAtta
 			return nil, nil
 		}
 
-		return nil, fmt.Errorf("failed to find status from db: %w", err)
+		return nil, fmt.Errorf("failed to find media from db: %w", err)
 	}
 
 	return entity, nil
+}
+
+
+func (r *status) GetTimelines(ctx context.Context) ([]object.Status, error) {
+
+	statuses := []object.Status{}
+	var args []interface{}
+
+	maxID, _ := ctx.Value(timelines.ContextMaxID).(int64)
+	
+    sinceID, _ := ctx.Value(timelines.ContextSinceID).(int64)
+
+    limit, _ := ctx.Value(timelines.ContextLimit).(int64)
+
+	onlyMedia, onlyMediaOk := ctx.Value(timelines.ContextOnlyMedia).(bool)
+
+	query := `SELECT * FROM Status WHERE id > ? `
+	args = append(args, sinceID)
+
+	if maxID > 0 {
+		query += " AND id < ?"
+		args = append(args, maxID)
+	}
+
+	if limit > 0 {
+		query += " LIMIT ?"
+		args = append(args, limit)
+	}
+	
+
+	rows, err := r.db.QueryxContext(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute query: %w", err)
+	}
+	defer rows.Close()
+
+
+	entity := new(StatusModel)
+	status := new(object.Status)
+	Ar := ctx.Value(timelines.ContextAr).(repository.Account)
+	
+	if !onlyMediaOk || !onlyMedia{
+		for rows.Next() {
+			
+			if err := rows.StructScan(entity); err != nil {
+				return nil, fmt.Errorf("failed to scan row: %w", err)
+			}
+			AccountId := entity.AccountId
+			account, err := Ar.FindById(ctx, AccountId)
+			if err != nil {
+				return nil, fmt.Errorf("failed to find account from db: %w", err)
+			}
+			status.Account = *account
+			status.ID = entity.ID
+			status.Content = entity.Content
+			status.CreateAt = entity.CreateAt
+			
+			media, err := r.FindMediaById(ctx, status.ID)
+			if err != nil {
+				return nil, fmt.Errorf("failed to find media from db: %w", err)
+			}
+			if media != nil {
+				status.MediaAttachment = *media
+			}
+			statuses = append(statuses, *status)
+		}
+	} else {
+		for rows.Next() {
+			
+			if err := rows.StructScan(&entity); err != nil {
+				return nil, fmt.Errorf("failed to scan row: %w", err)
+			}
+
+			AccountId := entity.AccountId
+			account, err := Ar.FindById(ctx, AccountId)
+			if err != nil {
+				return nil, fmt.Errorf("failed to find account from db: %w", err)
+			}
+			status.Account = *account
+			status.ID = entity.ID
+			status.Content = entity.Content
+			status.CreateAt = entity.CreateAt
+
+			media, err := r.FindMediaById(ctx, status.ID)
+			if err != nil {
+				return nil, fmt.Errorf("failed to find media from db: %w", err)
+			}
+			if media != nil {
+				status.MediaAttachment = *media
+				statuses = append(statuses, *status)
+			}
+		}
+	}
+	
+	return statuses, nil
+
 }

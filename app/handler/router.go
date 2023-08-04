@@ -7,6 +7,7 @@ import (
 	"yatter-backend-go/app/domain/repository"
 	"yatter-backend-go/app/handler/accounts"
 	"yatter-backend-go/app/handler/statuses"
+	"yatter-backend-go/app/handler/timelines"
 	"yatter-backend-go/app/handler/health"
 
 	"github.com/go-chi/chi/v5"
@@ -31,6 +32,7 @@ func NewRouter(ar repository.Account, sr repository.Status) http.Handler {
 
 	r.Mount("/v1/accounts", accounts.NewRouter(ar))
 	r.Mount("/v1/statuses", statuses.NewRouter(sr, ar))
+	r.Mount("/v1/timelines", timelines.NewRouter(sr, ar))
 	r.Mount("/v1/health", health.NewRouter())
 	
 	return r
